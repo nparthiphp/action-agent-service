@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Action Agent · VertexMind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M5 7l11 19L27 7' fill='none' stroke='%232A3CC9' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='26' r='3.4' fill='%232A3CC9'/%3E%3C/svg%3E">
+<style>
+/* ===== VertexMind theme. Replace these values with the official brand tokens. ===== */
+:root{
+  --vm-ink:#0F1B2D;          /* text and mark */
+  --vm-accent:#2A3CC9;       /* vertex indigo: actions, selection */
+  --vm-accent-strong:#2231A8;
+  --vm-accent-soft:#EAEDFB;
+  --vm-ground:#F5F7FA;       /* page */
+  --vm-surface:#FFFFFF;
+  --vm-line:#DDE3EC; --vm-line-soft:#ECEFF5;
+  --vm-muted:#586579;
+  --vm-display:"Sora","IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --vm-body:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --vm-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+/* ===== semantic colours stay fixed so risk always reads the same ===== */
+:root{
+  --t0:#586579; --t0-bg:#EEF1F5; --t1:#0B7A66; --t1-bg:#E2F4F0; --t2:#A4510B; --t2-bg:#FDF0E1; --t3:#6537B8; --t3-bg:#EFE8FA;
+  --ok:#157A3C; --ok-bg:#E3F4E9; --bad:#B42318; --bad-bg:#FCE9E7; --warn:#A4510B; --warn-bg:#FDF0E1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--vm-ground);color:var(--vm-ink);font:15px/1.5 var(--vm-body);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--vm-accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+h1,h2,h3{font-family:var(--vm-display);letter-spacing:-.015em}
+
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media (max-width:860px){.app{grid-template-columns:1fr}}
+
+/* side nav */
+.side{background:var(--vm-surface);border-right:1px solid var(--vm-line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh}
+@media (max-width:860px){.side{position:static;height:auto;flex-direction:row;align-items:center;flex-wrap:wrap;padding:10px 14px;gap:10px}}
+.logo{display:flex;align-items:center;gap:10px;padding:2px 8px;text-decoration:none;color:inherit}
+.logo svg{flex:none}
+.logo b{display:block;font:600 16px/1.1 var(--vm-display);letter-spacing:-.02em}
+.logo small{display:block;font-size:12px;color:var(--vm-muted);margin-top:2px}
+.nav{display:flex;flex-direction:column;gap:2px}
+@media (max-width:860px){.nav{flex-direction:row;margin-left:auto}}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--vm-muted);text-decoration:none;font-weight:500;font-size:14.5px}
+.nav a:hover{background:var(--vm-ground);color:var(--vm-ink)}
+.nav a[aria-current="page"]{background:var(--vm-accent-soft);color:var(--vm-accent-strong)}
+.nav svg{width:18px;height:18px;flex:none}
+.badge{margin-left:auto;background:var(--t2);color:#fff;border-radius:999px;font-size:12px;font-weight:600;padding:0 7px;min-width:20px;text-align:center}
+.side-foot{margin-top:auto;font-size:12.5px;color:var(--vm-muted);padding:0 8px}
+@media (max-width:860px){.side-foot{display:none}}
+
+/* main */
+.main{min-width:0}
+.top{display:flex;align-items:center;gap:14px;padding:12px 28px;background:var(--vm-surface);border-bottom:1px solid var(--vm-line);flex-wrap:wrap;position:sticky;top:0;z-index:5}
+.top h1{margin:0 auto 0 0;font-size:18px;font-weight:600}
+.check{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--vm-muted)}
+.btn{border:1px solid var(--vm-line);background:var(--vm-surface);padding:7px 14px;border-radius:8px;cursor:pointer;font-weight:500;font-size:14px}
+.btn:hover{background:var(--vm-ground)}
+.btn.primary{background:var(--vm-accent);border-color:var(--vm-accent);color:#fff}
+.btn.primary:hover{background:var(--vm-accent-strong)}
+.btn.danger{border-color:var(--bad);color:var(--bad)} .btn.danger:hover{background:var(--bad-bg)}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:500;background:var(--t0-bg);color:var(--t0)}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.warn{background:var(--warn-bg);color:var(--warn)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.banner{padding:10px 28px;font-size:14px;border-bottom:1px solid var(--vm-line)}
+.banner.kill{background:var(--bad-bg);color:var(--bad);font-weight:500}
+.banner.note{background:var(--vm-accent-soft);color:var(--vm-accent-strong)}
+.view{padding:24px 28px;max-width:1360px}
+@media (max-width:860px){.view{padding:16px}.top{padding:10px 16px}.banner{padding:10px 16px}}
+
+/* runs view */
+.split{display:grid;grid-template-columns:360px 1fr;gap:24px;align-items:start}
+@media (max-width:1000px){.split{grid-template-columns:1fr}}
+.col-title{font:600 13px var(--vm-body);color:var(--vm-muted);margin:0 0 8px}
+.group{margin-bottom:20px}
+.run{display:block;width:100%;text-align:left;background:var(--vm-surface);border:1px solid var(--vm-line);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.run:hover{border-color:#B7C2D3}
+.run[aria-current="true"]{border-color:var(--vm-accent);box-shadow:inset 3px 0 0 var(--vm-accent)}
+.run .row{display:flex;gap:8px;align-items:center;margin-bottom:5px}
+.run .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.run .meta{font-size:13px;color:var(--vm-muted);display:flex;justify-content:space-between;gap:8px}
+.empty{color:var(--vm-muted);font-size:14px;padding:14px;border:1px dashed var(--vm-line);border-radius:10px}
+.tier{font-family:var(--vm-mono);font-size:12px;font-weight:500;border-radius:5px;padding:1px 7px}
+.tier.T0{color:var(--t0);background:var(--t0-bg)} .tier.T1{color:var(--t1);background:var(--t1-bg)} .tier.T2{color:var(--t2);background:var(--t2-bg)} .tier.T3{color:var(--t3);background:var(--t3-bg)}
+.card{background:var(--vm-surface);border:1px solid var(--vm-line);border-radius:12px}
+.detail{padding:24px}
+.detail h2.title{margin:0 0 8px;font-size:22px}
+.sub{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--vm-muted);font-size:14px}
+.mono{font-family:var(--vm-mono);font-size:12.5px}
+.sec{margin-top:24px}
+.sec h3{font-size:14px;font-weight:600;margin:0 0 10px}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 16px;font-size:14px;margin:0}
+.kv dt{color:var(--vm-muted)} .kv dd{margin:0}
+.reasons{margin:0;padding-left:18px}
+.msg{padding:12px 14px;border-radius:8px;background:var(--vm-ground);font-size:14px;border-left:3px solid var(--vm-line)}
+.msg.bad{background:var(--bad-bg);border-color:var(--bad)} .msg.ok{background:var(--ok-bg);border-color:var(--ok)} .msg.warn{background:var(--warn-bg);border-color:var(--warn)}
+.decide{border:1px solid var(--t2);background:var(--t2-bg);border-radius:12px;padding:16px;margin-top:20px}
+.decide h3{margin:0 0 4px;font-size:16px}
+.decide p{margin:0 0 12px;font-size:14px;color:#6B3A0B}
+.decide .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.decide input{border:1px solid #D9B98F;background:#fff;border-radius:8px;padding:7px 10px;min-width:170px;flex:1}
+.fine{font-size:12.5px;color:var(--vm-muted);margin-top:8px}
+
+/* the step lane */
+.lane{border:1px solid var(--vm-line);border-radius:12px;overflow:hidden}
+.lane-head,.lane-row{display:grid;grid-template-columns:minmax(200px,1.3fr) repeat(4,minmax(70px,1fr));align-items:center}
+.lane-head{background:var(--vm-ground);font-size:12.5px;color:var(--vm-muted);font-weight:500;border-bottom:1px solid var(--vm-line)}
+.lane-head div,.lane-row>div{padding:10px 12px}
+.lane-row{border-bottom:1px solid var(--vm-line-soft)} .lane-row:last-child{border-bottom:0}
+.step-name{font-weight:600;font-size:14px}
+.step-name small{display:block;font-weight:400;font-size:12.5px;color:var(--vm-muted);word-break:break-word}
+.stage{position:relative;height:28px;display:flex;align-items:center}
+.stage::before{content:"";position:absolute;left:-12px;right:-12px;top:50%;height:2px;background:var(--vm-line)}
+.stage.done::before{background:var(--ok)} .stage.rb::before{display:none}
+.node{position:relative;z-index:1;width:22px;height:22px;border-radius:50%;border:2px solid var(--vm-line);background:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;line-height:1;margin:0 auto}
+.stage.done .node{background:var(--ok);border-color:var(--ok);color:#fff}
+.stage.fail .node{background:var(--bad);border-color:var(--bad);color:#fff}
+.stage.rolled .node{background:var(--vm-accent);border-color:var(--vm-accent);color:#fff}
+.stage.skip .node{border-style:dashed;border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
+.lane-note{grid-column:1/-1;padding:0 12px 10px!important;font-size:13px;color:var(--vm-muted)}
+.lane-note.bad{color:var(--bad)}
+@media (max-width:700px){.lane-head,.lane-row{grid-template-columns:1.4fr repeat(4,56px)}.lane-head div,.lane-row>div{padding:8px 6px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--vm-muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.plan{font-size:14px;margin:0;padding-left:20px} .plan li{margin-bottom:6px}
+
+/* start a run */
+.scn{display:block;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--vm-line);border-radius:10px;background:var(--vm-surface);cursor:pointer;margin-bottom:8px}
+.scn:hover{background:var(--vm-ground)} .scn b{display:block;font-size:14px} .scn span{font-size:13px;color:var(--vm-muted)}
+
+/* hero (empty state) */
+.hero{padding:56px 32px;text-align:center}
+.hero svg{margin-bottom:14px}
+.hero h2{font-size:26px;margin:0 0 8px;font-weight:600}
+.hero p{color:var(--vm-muted);max-width:46ch;margin:0 auto 20px}
+
+/* catalog */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{border:1px solid var(--vm-line);background:var(--vm-surface);border-radius:999px;padding:5px 14px;cursor:pointer;font-size:14px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--vm-ink);color:#fff;border-color:var(--vm-ink)}
+.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.act{padding:14px 16px}
+.act .hd{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+.act .hd b{font-family:var(--vm-display);font-size:15px;font-weight:600}
+.act p{margin:0 0 8px;font-size:14px;color:var(--vm-muted)}
+.act details summary{cursor:pointer;font-size:13.5px;font-weight:500;color:var(--vm-accent-strong)}
+.act dl{margin:8px 0 0;font-size:13.5px;display:grid;grid-template-columns:96px 1fr;gap:4px 12px}
+.act dt{color:var(--vm-muted)} .act dd{margin:0}
+.rb-chip{font-size:12px;border-radius:5px;padding:1px 7px;background:var(--vm-ground);color:var(--vm-muted);font-weight:500}
+.rb-chip.revert{background:var(--ok-bg);color:var(--ok)} .rb-chip.compensate{background:var(--warn-bg);color:var(--warn)}
+
+/* audit */
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tools input{border:1px solid var(--vm-line);background:var(--vm-surface);border-radius:8px;padding:8px 12px;min-width:260px;flex:1;max-width:420px}
+.ev{display:grid;grid-template-columns:96px 170px 150px 1fr;gap:10px;font-size:13px;padding:8px 14px;border-bottom:1px solid var(--vm-line-soft)}
+.ev:last-child{border-bottom:0}
+.ev .t{color:var(--vm-muted);font-family:var(--vm-mono);font-size:12px}
+.ev code{font-family:var(--vm-mono);font-size:12px;color:var(--vm-muted);word-break:break-word}
+.ev a{color:var(--vm-accent-strong);font-family:var(--vm-mono);font-size:12px;text-decoration:none}
+.ev a:hover{text-decoration:underline}
+.ev.small{grid-template-columns:96px 150px 1fr;padding:6px 0}
+@media (max-width:760px){.ev,.ev.small{grid-template-columns:1fr}}
+details.audit summary{cursor:pointer;font-weight:600;font-size:14px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--vm-ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;z-index:20;max-width:90vw}
+.toast.bad{background:var(--bad)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <a class="logo" href="#/runs" aria-label="VertexMind Action Agent">
+      <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 7l11 19L27 7" fill="none" stroke="var(--vm-ink)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5" cy="7" r="3" fill="var(--vm-ink)"/><circle cx="27" cy="7" r="3" fill="var(--vm-ink)"/><circle cx="16" cy="26" r="3.6" fill="var(--vm-accent)"/></svg>
+      <span><b>VertexMind</b><small>Action Agent</small></span>
+    </a>
+    <nav class="nav" id="nav" aria-label="Main"></nav>
+    <div class="side-foot">Execution layer of ARIES.<br>Prototype build.</div>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <h1 id="pagetitle">Runs</h1>
+      <div class="check" id="chain"></div>
+      <div class="check" id="ks"></div>
+    </header>
+    <div id="killbanner" class="banner kill" hidden>Kill switch is on. Nothing will run until it is turned off. Steps that already ran are not rolled back.</div>
+    <div class="banner note">Prototype: there is no sign-in. The name you enter when approving is recorded but not verified.</div>
+    <main class="view" id="view"></main>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const state = { runs: [], selected: null, ks: false, catalog: [], catById: {}, view: "runs", domain: "all", auditQ: "", audit: [], chain: null, typing: false };
+
+/* ---------- helpers ---------- */
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, "");
+    else if (v !== false && v != null) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  return el;
+}
+function svg(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
+function toast(msg, bad) { const t = h("div", { class: "toast" + (bad ? " bad" : ""), role: "status" }, msg); document.body.append(t); setTimeout(() => t.remove(), 3500); }
+async function api(path, opts) {
+  const res = await fetch(path, opts); let body = null;
+  try { body = await res.json(); } catch (_) {}
+  if (!res.ok) throw new Error(body && body.detail ? (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail)) : `Request failed (${res.status})`);
+  return body;
+}
+const post = (p, d) => api(p, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(d) });
+function ago(iso) { const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000); if (s < 60) return "just now"; if (s < 3600) return Math.floor(s / 60) + " min ago"; if (s < 86400) return Math.floor(s / 3600) + " h ago"; return Math.floor(s / 86400) + " d ago"; }
+function left(iso) { const s = Math.floor((new Date(iso).getTime() - Date.now()) / 1000); if (s <= 0) return "expired"; const m = Math.floor(s / 60); return m >= 1 ? `${m} min left` : `${s} s left`; }
+function getApprover() { try { return localStorage.getItem("aa_approver") || ""; } catch (_) { return ""; } }
+function setApprover(v) { try { localStorage.setItem("aa_approver", v); } catch (_) {} }
+const STATUS = { received:["Received",""], invalid:["Invalid plan","bad"], rejected_by_policy:["Blocked by policy","bad"], shadowed:["Shadow only",""], awaiting_human:["A person acts","warn"], human_required:["A person must act","warn"], awaiting_approval:["Waiting for approval","warn"], denied:["Denied",""], expired:["Approval expired",""], executing:["Running",""], verifying:["Verifying",""], succeeded:["Done","ok"], rolling_back:["Rolling back","warn"], rolled_back:["Rolled back","warn"], rollback_failed:["Rollback failed","bad"], failed:["Failed, nothing changed","bad"], killed:["Stopped by kill switch","bad"] };
+const statusPill = (s) => { const [t, c] = STATUS[s] || [s, ""]; return h("span", { class: "pill " + c }, h("span", { class: "dot" }), t); };
+const tierChip = (t) => t ? h("span", { class: "tier " + t }, t) : null;
+const label = (id) => id.replace(/_/g, " ");
+const msgClass = (s) => (["failed","rollback_failed","killed","rejected_by_policy","invalid"].includes(s) ? "bad" : s === "succeeded" ? "ok" : ["rolled_back","human_required","awaiting_human"].includes(s) ? "warn" : "");
+const MARK = { done: "✓", fail: "!", rolled: "↺", skip: "–" };
+const ICON = {
+  runs: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h14M3 10h14M3 15h9"/></svg>',
+  catalog: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg>',
+  audit: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l6 2.5v5c0 4-2.6 6.7-6 8-3.4-1.3-6-4-6-8v-5z"/><path d="M7.5 10l2 2 3.5-4"/></svg>',
+};
+
+/* ---------- routing ---------- */
+function route() {
+  const parts = location.hash.replace(/^#\/?/, "").split("/");
+  state.view = ["runs", "catalog", "audit"].includes(parts[0]) ? parts[0] : "runs";
+  if (state.view === "runs" && parts[1]) state.selected = parts[1];
+  if (state.view === "audit") loadAudit();
+  render();
+}
+window.addEventListener("hashchange", route);
+function go(hash) { location.hash = hash; }
+
+/* ---------- chrome ---------- */
+const TITLES = { runs: "Runs", catalog: "Action catalog", audit: "Audit trail" };
+function renderChrome() {
+  const pend = state.runs.filter((r) => r.status === "awaiting_approval").length;
+  const link = (v, text) => h("a", { href: "#/" + v, "aria-current": state.view === v ? "page" : null }, svg(ICON[v]), text, v === "runs" && pend ? h("span", { class: "badge", title: "Waiting for approval" }, pend) : null);
+  $("nav").replaceChildren(link("runs", "Runs"), link("catalog", "Action catalog"), link("audit", "Audit trail"));
+  $("pagetitle").textContent = TITLES[state.view];
+  $("killbanner").hidden = !state.ks;
+  $("ks").replaceChildren(h("span", {}, "Kill switch: ", h("b", {}, state.ks ? "on" : "off")), h("button", { class: "btn " + (state.ks ? "primary" : "danger"), onclick: toggleKill }, state.ks ? "Turn off" : "Stop all runs"));
+  const c = state.chain;
+  $("chain").replaceChildren(...[
+    c ? (c.ok ? h("span", { class: "pill ok" }, h("span", { class: "dot" }), "Audit trail intact") : h("span", { class: "pill bad" }, h("span", { class: "dot" }), `Audit trail broken at entry ${c.broken_at}`)) : null,
+    h("button", { class: "btn", onclick: verifyChain }, c ? "Check again" : "Check audit trail")].filter(Boolean));
+}
+async function toggleKill() {
+  const engage = !state.ks;
+  if (engage && !confirm("Stop all runs? New and waiting runs will not execute until you turn this off.")) return;
+  try { await post("/v1/killswitch", { engaged: engage, by: getApprover() || "console" }); toast(engage ? "Kill switch on" : "Kill switch off"); refresh(); } catch (e) { toast(e.message, true); }
+}
+async function verifyChain() { try { state.chain = await api("/v1/audit/verify"); renderChrome(); } catch (e) { toast(e.message, true); } }
+
+/* ---------- runs ---------- */
+function runCard(r) {
+  const rec = r.recommendation;
+  return h("button", { class: "run", "aria-current": String(r.run_id === state.selected), onclick: () => go("#/runs/" + r.run_id) },
+    h("div", { class: "row" }, tierChip(r.tier), h("span", { class: "name" }, `${rec.target} · ${rec.environment}`)),
+    h("div", { class: "row" }, statusPill(r.status)),
+    h("div", { class: "meta" }, h("span", {}, rec.steps.length + (rec.steps.length === 1 ? " step" : " steps")), h("span", {}, r.status === "awaiting_approval" && r.approval ? left(r.approval.expires_at) : ago(r.updated_at))));
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+const SCENARIOS = [
+  { name: "Payments outage, production", note: "Open a ticket, scale the node group, update the ticket. Needs approval.", rec: () => ({ recommendation_id: "ui-" + uid(), target: "payments", environment: "prod", confidence: 0.93, rationale: "Error rate above 5% with CPU saturated on the payments node group.", incident_ref: "INC-2041", steps: [{ action_id: "create_ticket", params: { title: "Payments failing", severity: "high", service: "payments" } }, { action_id: "scale_node_group", params: { group: "payments-ng", desired: 5 } }, { action_id: "update_ticket", params: { ticket_id: "$step[0].ticket_id", note: "scaled payments-ng to 5" } }] }) },
+  { name: "Stop an idle dev VM", note: "FinOps saving in non-production. Reversible.", rec: () => ({ recommendation_id: "ui-" + uid(), target: "vm-dev-01", environment: "nonprod", confidence: 0.88, rationale: "No CPU or network use for 14 days.", steps: [{ action_id: "stop_idle_resource", params: { resource_id: "vm-dev-01" } }] }) },
+  { name: "Plan with a wrong target", note: "Scales a node group that does not exist. The dry run catches it before anything changes.", rec: () => ({ recommendation_id: "ui-" + uid(), target: "payments", environment: "prod", confidence: 0.7, steps: [{ action_id: "create_ticket", params: { title: "Scale test", severity: "low", service: "payments" } }, { action_id: "scale_node_group", params: { group: "no-such-group", desired: 5 } }] }) },
+  { name: "Restart a service, production", note: "InfraOps restart. Production raises the tier.", rec: () => ({ recommendation_id: "ui-" + uid(), target: "web-01", environment: "prod", confidence: 0.9, steps: [{ action_id: "restart_service", params: { host: "web-01", service: "payments" } }] }) },
+];
+async function startScenario(s) { try { const r = await post("/v1/recommendations", s.rec()); upsert(r); go("#/runs/" + r.run_id); toast("Run started"); } catch (e) { toast(e.message, true); } }
+const scenarioList = () => SCENARIOS.map((s) => h("button", { class: "scn", onclick: () => startScenario(s) }, h("b", {}, s.name), h("span", {}, s.note)));
+
+const STAGES = ["Dry run", "Run", "Verify", "Roll back"];
+function stageStates(step, run) {
+  const s = step.status, o = ["", "", "", ""], dryFail = run.message && run.message.includes("nothing was executed");
+  if (s === "dry_run_ok") o[0] = "done";
+  else if (s === "executed") o[0] = o[1] = "done";
+  else if (s === "verified") o[0] = o[1] = o[2] = "done";
+  else if (s === "failed") { if (dryFail) o[0] = "fail"; else { o[0] = "done"; o[1] = "fail"; } }
+  else if (s === "rolled_back") { o[0] = o[1] = "done"; o[3] = "rolled"; }
+  else if (s === "rollback_skipped") { o[0] = o[1] = "done"; o[3] = "skip"; }
+  else if (s === "rollback_failed") { o[0] = o[1] = "done"; o[3] = "fail"; }
+  return o;
+}
+function lane(run) {
+  const wrap = h("div", { class: "lane", role: "table", "aria-label": "Steps" });
+  wrap.append(h("div", { class: "lane-head", role: "row" }, h("div", {}, "Step"), STAGES.map((s) => h("div", { style: "text-align:center" }, s))));
+  run.steps.forEach((st) => {
+    const c = state.catById[st.action_id];
+    const p = Object.entries(st.params || {}).map(([k, v]) => `${k}=${typeof v === "object" ? JSON.stringify(v) : v}`).join(", ");
+    wrap.append(h("div", { class: "lane-row", role: "row" },
+      h("div", {}, h("div", { class: "step-name" }, `${st.index + 1}. ${label(st.action_id)} `, c ? tierChip(c.tier) : null, h("small", {}, p || "no inputs"))),
+      stageStates(st, run).map((x, i) => h("div", { role: "cell" }, h("div", { class: `stage ${x} ${i === 3 ? "rb" : ""}`, title: STAGES[i] + (x ? ": " + x : "") }, h("span", { class: "node" }, MARK[x] || ""))))));
+    if (st.detail && !["pending", "dry_run_ok"].includes(st.status)) wrap.append(h("div", { class: "lane-row" }, h("div", { class: "lane-note " + (["failed", "rollback_failed", "rollback_skipped"].includes(st.status) ? "bad" : "") }, st.detail + (st.attempts > 1 ? ` (${st.attempts} attempts)` : ""))));
+  });
+  return wrap;
+}
+
+async function detailView(run) {
+  const rec = run.recommendation, f = [];
+  f.push(h("h2", { class: "title" }, `${rec.target} · ${rec.environment}`));
+  f.push(h("div", { class: "sub" }, statusPill(run.status), tierChip(run.tier), h("span", {}, `from ${rec.source}`), rec.incident_ref ? h("span", {}, `incident ${rec.incident_ref}`) : null, h("span", { class: "mono" }, run.run_id)));
+  if (run.message && run.status !== "awaiting_approval") f.push(h("div", { class: "sec" }, h("div", { class: "msg " + msgClass(run.status) }, run.message)));
+  if (run.status === "awaiting_approval" && run.approval) {
+    const inp = h("input", { type: "text", placeholder: "Your name", value: getApprover(), "aria-label": "Your name", onfocus: () => state.typing = true, onblur: () => state.typing = false });
+    const cm = h("input", { type: "text", placeholder: "Comment (optional)", "aria-label": "Comment", onfocus: () => state.typing = true, onblur: () => state.typing = false });
+    const decide = async (kind) => {
+      const name = inp.value.trim(); if (!name) { toast("Enter your name first", true); inp.focus(); return; }
+      setApprover(name);
+      try { const r = await post(`/v1/runs/${run.run_id}/${kind}`, { approver: name, comment: cm.value.trim() }); toast(kind === "approve" ? "Approved" : "Denied"); upsert(r); render(); } catch (e) { toast(e.message, true); refresh(); }
+    };
+    f.push(h("div", { class: "decide" }, h("h3", {}, "This plan needs your approval"), h("p", {}, `Approval expires in ${left(run.approval.expires_at).replace(" left", "")}. Policy is checked again when you approve.`),
+      h("div", { class: "row" }, inp, cm, h("button", { class: "btn primary", onclick: () => decide("approve") }, "Approve and run"), h("button", { class: "btn danger", onclick: () => decide("deny") }, "Deny")),
+      h("div", { class: "fine" }, "The name is not verified in this prototype.")));
+  }
+  f.push(h("div", { class: "sec" }, h("h3", {}, "Steps"), lane(run), h("div", { class: "legend" },
+    h("span", {}, h("i", { style: "background:var(--ok)" }), "done"), h("span", {}, h("i", { style: "background:var(--bad)" }), "failed"), h("span", {}, h("i", { style: "background:var(--vm-accent)" }), "rolled back"), h("span", {}, h("i", { style: "border:2px dashed var(--warn);width:6px;height:6px" }), "cannot be undone"))));
+  const kv = [h("dt", {}, "Why " + (run.tier || "")), h("dd", {}, run.risk_reasons.length ? h("ul", { class: "reasons" }, run.risk_reasons.map((x) => h("li", {}, x))) : "No extra risk reasons.")];
+  if (run.mode) kv.push(h("dt", {}, "Autonomy mode"), h("dd", {}, label(run.mode)));
+  if (run.policy) kv.push(h("dt", {}, "Policy"), h("dd", {}, (run.policy.allowed ? "Allowed" : "Blocked") + (run.policy.reason ? `: ${run.policy.reason}` : "")));
+  if (run.approval && run.approval.decided_by) kv.push(h("dt", {}, "Decision"), h("dd", {}, `${run.approval.status} by ${run.approval.decided_by}` + (run.approval.comment ? `: ${run.approval.comment}` : "")));
+  kv.push(h("dt", {}, "Confidence"), h("dd", {}, Math.round(rec.confidence * 100) + "%"));
+  if (rec.rationale) kv.push(h("dt", {}, "Rationale"), h("dd", {}, rec.rationale));
+  f.push(h("div", { class: "sec" }, h("h3", {}, "Details"), h("dl", { class: "kv" }, kv)));
+  if (run.human_plan && run.human_plan.length) f.push(h("div", { class: "sec" }, h("h3", {}, "Plan for a person to carry out"), h("ol", { class: "plan" }, run.human_plan.map((p) => h("li", {}, h("b", {}, label(p.action_id || "step")), p.summary ? ` · ${p.summary}` : "", p.verify ? h("div", { class: "fine" }, "Check: " + p.verify) : null, p.rollback ? h("div", { class: "fine" }, "Undo: " + p.rollback) : null)))));
+  const body = h("div", { style: "margin-top:8px" }, "Loading…");
+  const aud = h("details", { class: "audit sec" }, h("summary", {}, "Audit trail for this run"), body);
+  if (state.auditOpen) aud.open = true;
+  aud.addEventListener("toggle", () => { state.auditOpen = aud.open; });
+  f.push(aud);
+  api(`/v1/runs/${run.run_id}/audit`).then((ev) => body.replaceChildren(...(ev.length ? ev.map((e) => h("div", { class: "ev small" }, h("span", { class: "t" }, new Date(e.ts).toLocaleTimeString()), h("span", {}, label(e.event)), h("code", {}, JSON.stringify(e.data)))) : [h("div", { class: "empty" }, "No events yet.")]))).catch(() => {});
+  return f;
+}
+function renderRuns() {
+  const pend = state.runs.filter((r) => r.status === "awaiting_approval");
+  const run = state.runs.find((r) => r.run_id === state.selected);
+  const left_ = h("aside", {},
+    h("div", { class: "group" }, h("p", { class: "col-title" }, "Needs your decision"), ...(pend.length ? pend.map(runCard) : [h("div", { class: "empty" }, "Nothing is waiting for you.")])),
+    h("div", { class: "group" }, h("p", { class: "col-title" }, "All runs"), ...(state.runs.length ? state.runs.map(runCard) : [h("div", { class: "empty" }, "No runs yet. Start one below.")])),
+    h("div", { class: "group" }, h("p", { class: "col-title" }, "Start a sample run"), ...scenarioList()));
+  const right = h("section", { class: "card detail", "aria-live": "polite" });
+  if (run) detailView(run).then((nodes) => right.replaceChildren(...nodes));
+  else right.append(h("div", { class: "hero" },
+    svg('<svg width="56" height="56" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 7l11 19L27 7" fill="none" stroke="var(--vm-ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5" cy="7" r="2.5" fill="var(--vm-ink)"/><circle cx="27" cy="7" r="2.5" fill="var(--vm-ink)"/><circle cx="16" cy="26" r="3" fill="var(--vm-accent)"/></svg>'),
+    h("h2", {}, "Recommendations in. Safe changes out."), h("p", {}, "Every plan is checked, approved when it needs to be, verified after it runs, and rolled back if it fails. Pick a run, or start a sample."), ...[]));
+  $("view").replaceChildren(h("div", { class: "split" }, left_, right));
+}
+
+/* ---------- catalog ---------- */
+function renderCatalog() {
+  const domains = ["all", ...Array.from(new Set(state.catalog.map((c) => c.domain)))];
+  const chips = h("div", { class: "chips", role: "group", "aria-label": "Filter by domain" }, domains.map((d) => h("button", { class: "chip", "aria-pressed": String(state.domain === d), onclick: () => { state.domain = d; render(); } }, d === "all" ? `All (${state.catalog.length})` : label(d))));
+  const list = state.catalog.filter((c) => state.domain === "all" || c.domain === state.domain);
+  const cards = list.map((c) => h("article", { class: "card act" },
+    h("div", { class: "hd" }, tierChip(c.tier), h("b", {}, label(c.action_id)), h("span", { class: "rb-chip " + c.rollback.kind }, c.rollback.kind === "revert" ? "can undo" : c.rollback.kind === "compensate" ? "compensate" : "nothing to undo")),
+    h("p", {}, c.summary),
+    h("details", {}, h("summary", {}, "Contract"), h("dl", {},
+      h("dt", {}, "Domain"), h("dd", {}, label(c.domain)),
+      h("dt", {}, "Inputs"), h("dd", {}, c.inputs.length ? c.inputs.join(", ") : "none"),
+      h("dt", {}, "Blast radius"), h("dd", {}, c.blast_radius),
+      c.production_floor ? [h("dt", {}, "In production"), h("dd", {}, "at least " + c.production_floor)] : null,
+      c.blast_param ? [h("dt", {}, "Escalates when"), h("dd", {}, `${c.blast_param} is above ${c.blast_limit}`)] : null,
+      c.preconditions.length ? [h("dt", {}, "Before running"), h("dd", {}, c.preconditions.join("; "))] : null,
+      h("dt", {}, "Verified by"), h("dd", {}, c.verify.description),
+      h("dt", {}, "Rollback"), h("dd", {}, c.rollback.description)))));
+  $("view").replaceChildren(chips, h("div", { class: "acts" }, ...cards));
+}
+
+/* ---------- audit ---------- */
+async function loadAudit() { try { state.audit = await api("/v1/audit?limit=300"); if (state.view === "audit") renderAudit(); } catch (e) { toast(e.message, true); } }
+function renderAudit() {
+  const q = state.auditQ.trim().toLowerCase();
+  const rows = state.audit.filter((e) => !q || (e.run_id + " " + e.event + " " + JSON.stringify(e.data)).toLowerCase().includes(q));
+  const search = h("input", { type: "search", placeholder: "Search run, event or detail", "aria-label": "Search audit trail", value: state.auditQ, oninput: (ev) => { state.auditQ = ev.target.value; renderAudit(); const i = document.querySelector(".tools input"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); } });
+  const list = h("div", { class: "card" }, ...(rows.length ? rows.map((e) => h("div", { class: "ev" }, h("span", { class: "t" }, new Date(e.ts).toLocaleTimeString()), h("span", {}, label(e.event)), h("a", { href: "#/runs/" + e.run_id }, e.run_id), h("code", {}, JSON.stringify(e.data)))) : [h("div", { class: "empty", style: "border:0" }, "No matching events.")]));
+  $("view").replaceChildren(h("div", { class: "tools" }, search, h("span", { class: "fine" }, `${rows.length} of ${state.audit.length} recent events`)), list);
+}
+
+/* ---------- loop ---------- */
+function upsert(r) { const i = state.runs.findIndex((x) => x.run_id === r.run_id); if (i >= 0) state.runs[i] = r; else state.runs.unshift(r); }
+function render() { renderChrome(); if (state.view === "runs") renderRuns(); else if (state.view === "catalog") renderCatalog(); else renderAudit(); }
+async function refresh() {
+  try {
+    const [runs, ks] = await Promise.all([api("/v1/runs?limit=100"), api("/v1/killswitch")]);
+    state.runs = runs; state.ks = ks.engaged;
+    if (state.view === "runs" && !state.selected && runs.length) state.selected = (runs.find((r) => r.status === "awaiting_approval") || runs[0]).run_id;
+    if (state.typing || state.view !== "runs") renderChrome(); else render();
+  } catch (_) {}
+}
+(async function init() {
+  try { state.catalog = await api("/v1/catalog"); state.catalog.forEach((c) => state.catById[c.action_id] = c); } catch (_) {}
+  route(); await refresh(); setInterval(refresh, 4000);
+})();
+</script>
+</body>
+</html>

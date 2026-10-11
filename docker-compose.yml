@@ -1,0 +1,45 @@
+# Core plus one container per executor group. Executors have no published ports: only the core
+# reaches them. Target systems, the Policy Agent and ARIES monitoring are simulated or stubbed
+# until AA_POLICY_URL and AA_HEALTH_URL point at the real services.
+services:
+  core:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      AA_DB_PATH: /data/action_agent.db
+      AA_DEFAULT_MODE: approve_and_run
+      AA_EXECUTOR_INCIDENT_URL: http://executor-incident:8000
+      AA_EXECUTOR_INFRA_URL: http://executor-infra:8000
+      AA_EXECUTOR_FINOPS_URL: http://executor-finops:8000
+      # AA_POLICY_URL: https://policy-agent.internal
+      # AA_HEALTH_URL: https://aries-monitoring.internal
+    volumes:
+      - core-data:/data
+    depends_on:
+      - executor-incident
+      - executor-infra
+      - executor-finops
+
+  executor-incident:
+    build: .
+    command: ["uvicorn", "action_agent.executors.incident.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  executor-infra:
+    build: .
+    command: ["uvicorn", "action_agent.executors.infra.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  executor-finops:
+    build: .
+    command: ["uvicorn", "action_agent.executors.finops.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  # React console. Open http://localhost:8080 (the core's own page stays at :8000).
+  console:
+    build: ./ui
+    ports:
+      - "8080:80"
+    depends_on:
+      - core
+
+volumes:
+  core-data:
